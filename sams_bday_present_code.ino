@@ -10,7 +10,13 @@ const int dataPin = 5;
 byte numitronA = 0;
 byte numitronB = 0;
 
-char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+//TODO
+  // Button to turn off display when book is closed
+  // Button to set time
+  // Add the two circular leds to show minutes/seconds
+  // Make numitrons show hours
+  // Maybe add a date disp, from one of the spare 7-segment arrays prewired to a max7221 I have laying around. (Probably not, will use too much power/space).
+
 
 void setup () {
   pinMode(latchPin, OUTPUT);
