@@ -157,17 +157,79 @@ void setup () {
   numitronA = 0;
   numitronB = 0;
   updateShiftRegisters();
+
   
 }
 
+// begin/end is inclusive
+void colorize_ring_hours(byte begin, byte end, bool am) {
+  for ( byte i = begin; i != end+1; ++i ) {
+                       // Pixel number, r, g, b
+    if ( am ) {
+      strip.setPixelColor(i, i,i,31-i);
+    } else {
+      strip.setPixelColor(i,31-i,i,i);
+    }
+  }
+}
+
+// begin/end is inclusive
+void colorize_ring_seconds(byte begin, byte end, byte seconds, byte hours, int milliseconds) {
+  float mult = .1
+  + ((abs(milliseconds-500))/500.0)*5;
+  for ( byte i = begin; i != end+1; ++i ) {
+                       // Pixel number, r, g, b
+     // float normalizer = day*day + hour*hour + minute*minute;
+     // strip.setPixelColor(i, 30*((day*day)/normalizer),30*((hour*hour)/normalizer),30*((minute*minute)/normalizer));
+
+     int color_transition = ((i-begin)*60)/(end-begin);
+     if ( end == begin ) { color_transition = 60; } //If one one led is lit, then make it fully transitioned, so it appears to transitions aroind and around!!
+     byte g = (60-color_transition/2)/3;
+     byte b = (hours*10)/12;
+     byte r = color_transition/6;
+      if ( i != end ) {
+       g*=mult;
+       r*=mult;
+       b*=mult;
+     } else {
+       int sum = r+g+b;
+       g = sum/2;
+       r = sum/2;
+       b = sum/2;
+     }
+     strip.setPixelColor(i, r,g,b);
+ 
+    
+  }
+}
+
+void update_rings(byte curr_hour, byte curr_second, bool am, int milliseconds) {
+  // Ring A should be leds 0-11, and ring B should then be 12-23. I will use ring A for hours, and ring B for seconds.
+
+  // Handle hours
+  // 
+  colorize_ring_hours(0,curr_hour, am);
+  // Handle second
+  //hour translates directly, but for seconds, we want to enable up to 12, so divide by 5.
+  colorize_ring_seconds(12,12+(curr_second/5),curr_second, curr_hour, milliseconds);
+
+
+}
+
+void blank_displays() {
+   numitronA = 0;
+   numitronB = 0; 
+   colorWipe(strip.Color(0,0,0));
+}
+
+int millis_offset = -1;
+bool set_mode = false;
+long set_button_false = 0;
 void loop () {
    checkButtons();
   //Neo pixel section
     // Some example procedures showing how to display to the pixels:
-  colorWipe(strip.Color(30, 0, 0)); // Red //30 seems like a reasonable brightness.
-  //colorWipe(strip.Color(0, 255, 0)); // Green
-  //colorWipe(strip.Color(0, 0, 255)); // Blue
-  //colorWipe(strip.Color(0,0,0)); //Turn it off
+  colorWipe(strip.Color(0, 0, 0)); // Background color, for leds not overwritten, ie, if it's 6, then 7,8,9,10,11 will be this color. I like it off, but ask alyssa what she things though.
   //End neopixel section
   
   
@@ -181,23 +243,32 @@ void loop () {
   numitronA = getCharToDisplay('0' + (minutes/10));
 
   // Set the led rings to display the hours, and seconds
+  if ( millis_offset == -1 ) {
+      int second = now.second();
+      long millis_count = millis();
+      while ( second == now.second() ) {
+        delay(5);
+        now = rtc.now();
+      }
+      millis_offset = millis() - millis_count;
+  }
+  // Millis offset should insure milliseconds stay roughly in sync with the clock.
+  update_rings(now.hour()%12,now.second(),now.hour() > 11,(millis()+millis_offset)%1000);
 
   // Handle clock setting logic.
   
 
   // Handle turning off the leds when the book is closed. 
   if ( book_closed.query() ) {
-    numitronA = 0;
-    numitronB = 0; 
-    colorWipe(strip.Color(0,0,0));
     //If the book is closed, turn off both numitrons, and the led rings
+    blank_displays();
   }
 
 
   // Refresh the numitrons and the led strip to show their content!
   updateShiftRegisters();
   strip.show(); 
-  delay(500); //Wait half a second.
+  delay(10); //Wait half a second.
 
 }
 
