@@ -51,7 +51,7 @@ byte numitronB = 0;
 
 // Button managers
 const int close_button_pin = 12;
-const int set_button_pin = 13;
+const int set_button_pin = 9;
 BasicDebounce book_closed = BasicDebounce(close_button_pin, 50);
 BasicDebounce set_button = BasicDebounce(set_button_pin, 50);
 
@@ -222,11 +222,83 @@ void blank_displays() {
    colorWipe(strip.Color(0,0,0));
 }
 
+void render_displays() {
+  updateShiftRegisters();
+  strip.show(); 
+}
 int millis_offset = -1;
-bool set_mode = false;
+
+enum SetMode { off, hour, minute };
+SetMode set_mode = off;
 long set_button_false = 0;
+int long_press_dur = 2000;
+byte set_hour = 0;
+byte set_minute = 0;
+
+void handle_book_close_during_set_mode_btn_press() {
+  DateTime now = rtc.now();
+  if ( set_mode == hour ) {
+        set_mode = minute;
+  } else if ( set_mode == minute ) {
+        set_mode = off;
+        //Set rtc time here!
+        // January 21, 2014 at 3am you would call:
+        rtc.adjust(DateTime(now.year(),now.month(),now.day(), set_hour, set_minute, 0));
+        set_button.set_button_pressed_callback(0);
+        book_closed.set_button_pressed_callback(0);
+  }
+}
+
+void handle_set_btn_during_set_mode_btn_press() {
+     if ( set_mode == hour ) {
+        set_hour += 1;
+     }
+     else if ( set_mode == minute ) {
+        set_minute += 1;
+      }
+
+}
+
+
 void loop () {
    checkButtons();
+  //Clock setting logic
+  // Setting mode
+  if ( set_mode != off) {
+    // Do clock setting stuff, then return
+    byte set_helper = 05;
+    set_hour = set_hour%24;
+    if ( set_mode == hour ) {
+      set_helper= set_hour;
+    }
+    set_minute = set_minute%60;
+    if ( set_mode == minute ) {
+      set_helper= set_minute;
+    }
+    blank_displays();
+    numitronB = getCharToDisplay('0' + (set_helper%10));
+    numitronA = getCharToDisplay('0' + (set_helper/10));
+    render_displays();
+    return;
+  }
+
+  // Logic to enter setting mode
+  if ( set_button.query()) {
+      if ( ( millis() - set_button_false ) > long_press_dur ) {
+        set_mode = hour;
+        set_hour = 0;
+        set_minute = 0;
+        bool prev_book_closed_btn = false;
+        bool prev_set_btn = true;
+        blank_displays();
+        set_button.set_button_pressed_callback(&handle_set_btn_during_set_mode_btn_press);
+        book_closed.set_button_pressed_callback(&handle_book_close_during_set_mode_btn_press);
+      }
+  } else {
+    set_button_false = millis();
+  }
+
+  
   //Neo pixel section
     // Some example procedures showing how to display to the pixels:
   colorWipe(strip.Color(0, 0, 0)); // Background color, for leds not overwritten, ie, if it's 6, then 7,8,9,10,11 will be this color. I like it off, but ask alyssa what she things though.
@@ -253,7 +325,7 @@ void loop () {
       millis_offset = millis() - millis_count;
   }
   // Millis offset should insure milliseconds stay roughly in sync with the clock.
-  update_rings(now.hour()%12,now.second(),now.hour() > 11,(millis()+millis_offset)%1000);
+  update_rings(now.hour()%12,now.second(),now.hour() <= 11,(millis()+millis_offset)%1000);
 
   // Handle clock setting logic.
   
@@ -266,9 +338,7 @@ void loop () {
 
 
   // Refresh the numitrons and the led strip to show their content!
-  updateShiftRegisters();
-  strip.show(); 
-  delay(10); //Wait half a second.
-
+  render_displays();
+  delay(10); 
 }
 
