@@ -40,6 +40,7 @@ const int dataPin = 5;
 // Numitron state
 byte numitronA = 0;
 byte numitronB = 0;
+const int numitron_dp_pin = 10;
 // End numitron section
 
 //TODO
@@ -129,9 +130,13 @@ void setup () {
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
   //End neo pixel stuff
+
+  //Numitron pins
   pinMode(latchPin, OUTPUT);
   pinMode(dataPin, OUTPUT);  
   pinMode(clockPin, OUTPUT);
+  pinMode(numitron_dp_pin,OUTPUT);
+  digitalWrite(numitron_dp_pin,LOW);
 
   //Button pins
   pinMode(close_button_pin, INPUT_PULLUP);
@@ -218,7 +223,8 @@ void update_rings(byte curr_hour, byte curr_second, bool am, int milliseconds) {
 
 void blank_displays() {
    numitronA = 0;
-   numitronB = 0; 
+   numitronB = 0;
+  digitalWrite(numitron_dp_pin,LOW);
    colorWipe(strip.Color(0,0,0));
 }
 
@@ -326,7 +332,12 @@ void loop () {
   }
   // Millis offset should insure milliseconds stay roughly in sync with the clock.
   update_rings(now.hour()%12,now.second(),now.hour() <= 11,(millis()+millis_offset)%1000);
-
+  // Set the numitron dp
+  if ( now.hour() > 11 ) {
+     digitalWrite(numitron_dp_pin,HIGH);
+  } else {
+     digitalWrite(numitron_dp_pin,LOW);
+  }
   // Handle clock setting logic.
   
 
