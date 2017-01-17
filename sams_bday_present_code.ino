@@ -1,5 +1,8 @@
 #include <Button_Debounce.h>
 
+
+#include <Button_Debounce.h>
+
 // Date and time functions using a DS3231 RTC connected via I2C and Wire lib
 #include <Wire.h>
 #include "RTClib.h"
@@ -238,7 +241,7 @@ int long_press_dur = 2000;
 byte set_hour = 0;
 byte set_minute = 0;
 
-void handle_book_close_during_set_mode_btn_press() {
+void handle_book_close_during_set_mode_btn_press(BasicDebounce* button) {
   DateTime now = rtc.now();
   if ( set_mode == hour ) {
         set_mode = minute;
@@ -252,7 +255,7 @@ void handle_book_close_during_set_mode_btn_press() {
   }
 }
 
-void handle_set_btn_during_set_mode_btn_press() {
+void handle_set_btn_during_set_mode_btn_press(BasicDebounce* button) {
      if ( set_mode == hour ) {
         set_hour += 1;
      }
