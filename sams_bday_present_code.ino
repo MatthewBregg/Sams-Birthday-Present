@@ -44,11 +44,8 @@ const int numitron_dp_pin = 10;
 // End numitron section
 
 //TODO
-  // Place into the book
-  // Add the two circular leds to show hours/seconds
-  // Make numitrons show minutes.
-  // Maybe add a date disp, from one of the spare 7-segment arrays prewired to a max7221 I have laying around. (Probably not, will use too much power/space).
-  // Also wire up shift registers master enable to a pin to properly turn off when book closed, might solve the occosional issue I've been hainv.g
+  // Maybe add a date disp, from one of the spare 7-segment arrays prewired to a max7221 I have laying around. (Probably not, will use too much power/space, and date isn't that useful. This is mostly an aesthetic thing, like any clock, not really designed for functionality.)
+  // Also wire up shift registers master enable to a pin to properly turn off when book closed, might solve the occosional issue I've been having. (Ehh, no longer having any issues, was probably weird thing from having both DC wall wart + usb connected at once.)
 
 // Button managers
 const int close_button_pin = 12;
